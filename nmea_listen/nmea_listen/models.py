@@ -116,7 +116,7 @@ class Boat(ModelBase):
 
 
 class Telemetry(ModelBase):
-   __tablename__ = 'telemetry'
+    __tablename__ = 'telemetry'
 
     def __init__(self):
         pass
