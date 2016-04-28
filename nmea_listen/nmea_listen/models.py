@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime as dt
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker,relationship, backref
 from sqlalchemy import create_engine, DateTime, Boolean, Column, Integer, String, ForeignKey
@@ -50,6 +51,7 @@ class Boat(ModelBase):
     dim_to_port = Column(Integer, default=None)
     dim_to_star = Column(Integer, default=None)
     type_and_cargo = Column(Integer, default=None)
+    lastseen_on = Column(DateTime, default = dt.utcnow)
 
     def __init__(self, mmsi):
         self.mmsi = mmsi
@@ -69,6 +71,9 @@ class Boat(ModelBase):
 
         if boat is None:
             boat = Boat(mmsi)
+        else:
+            # if we've seen this boat before update lastseen time
+            boat.lastseen_on = dt.utcnow()
 
         boat._parse_beacon(beacon)
         boat.save()
@@ -108,3 +113,10 @@ class Boat(ModelBase):
                 self.dim_to_stern = int(d2stern)
                 self.dim_to_port = int(d2port)
                 self.dim_to_star = int(d2star)
+
+
+class Telemetry(ModelBase):
+   __tablename__ = 'telemetry'
+
+    def __init__(self):
+        pass
