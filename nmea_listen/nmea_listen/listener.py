@@ -6,6 +6,8 @@ import logging
 from logging.config import fileConfig
 from pprint import pprint
 
+from models import Boat, Base, engine
+
 LISTEN_IP = '10.8.0.1'
 LISTEN_PORT  = 3000
 #LISTEN_IP = '0.0.0.0'
@@ -28,15 +30,21 @@ def read_socket():
 
 def decode(message):
 
+    decoded = None
+
     # immediately attempt to extract payload from single part messages
     if '\r\n' not in message:
         try:
             payload = message.split(',')[5]
         except Exception as e:
-            log.error('{} 1 trying to decode {}'.format(e, message))
+            log.error('{} trying to parse message {}'.format(e, message))
             return
 
-        return ais.decode(payload)
+        try:
+            decoded = ais.decode(payload)
+        except Exception as e:
+            log.error('{} trying to decode message {}'.format(e, message))
+            return
 
     # unpack and assemble payload from multipart messages
     else:
@@ -44,13 +52,20 @@ def decode(message):
         try:
             payload = ''.join(fragment.split(',')[5] for fragment in fragments)
         except Exception as e:
-            log.error('{} 2 trying to decode {}'.format(e, message))
+            log.error('{} trying to parse multipart message {}'.format(e, message))
             return
         # not sure what this is for but it seems to be necessary
         # found it here: https://github.com/schwehr/libais/blob/master/test/test_decode.py#L20
         pad = int(fragments[-1].split('*')[0][-1])
-        return ais.decode(payload, pad)
-        
+        try:
+            decoded = ais.decode(payload, pad)
+        except Exception as e:
+            log.error('{} trying to decode multipart message {}'.format(e, message))
+            log.debug('Payload: {}'.format(payload))
+            log.debug('Pad: {}'.format(pad))
+            return
+
+    return decoded
 
 def read_payload(fragment):
     data = fragment.strip().split(',')
@@ -63,9 +78,11 @@ def read_payload(fragment):
     return data
 
 if __name__ == '__main__':
-
-    buf = None
+    Base.metadata.create_all(engine)
 
     for data in read_socket():
-        print '*' * 50
-        pprint(decode(data))
+        beacon = decode(data)
+        pprint(beacon)
+        Boat.from_beacon(beacon)
+        #import pdb
+        #pdb.set_trace()
