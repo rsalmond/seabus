@@ -82,7 +82,6 @@ if __name__ == '__main__':
 
     for data in read_socket():
         beacon = decode(data)
-        pprint(beacon)
-        Boat.from_beacon(beacon)
-        #import pdb
-        #pdb.set_trace()
+        if beacon is not None:
+            pprint(beacon)
+            Boat.from_beacon(beacon)
