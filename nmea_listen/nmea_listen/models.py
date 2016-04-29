@@ -3,7 +3,7 @@ import logging
 from datetime import datetime as dt
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker,relationship, backref
-from sqlalchemy import create_engine, DateTime, Boolean, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, DateTime, Boolean, Column, Integer, String, ForeignKey, Float
 
 from errors import InvalidBeaconError
 
@@ -117,6 +117,21 @@ class Boat(ModelBase):
 
 class Telemetry(ModelBase):
     __tablename__ = 'telemetry'
+    
+    nav_status = Column(Integer)
+    pos_accuracy = Column(Integer)
+    lon = Column(Float)
+    lat = Column(Float)
+    speed_over_ground = Column(Float)
+    course_over_ground = Column(Float)
+    true_heading = Column(Integer)
+    rate_of_turn = Column(Float)
+    rate_of_turn_over_range = Column(Boolean)
+    timestamp = Column(Integer)
 
-    def __init__(self):
+    def __init__(self, beacon):
         pass
+
+
+    def _parse_beacon(self, beacon):
+        pass 

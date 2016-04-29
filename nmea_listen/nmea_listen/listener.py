@@ -83,5 +83,9 @@ if __name__ == '__main__':
     for data in read_socket():
         beacon = decode(data)
         if beacon is not None:
-            pprint(beacon)
-            Boat.from_beacon(beacon)
+            print type(beacon)
+            print beacon.get.__doc__
+            if beacon.get('id', None) != 5:
+                print 'Oddball beacon found:'
+            #    pprint(beacon)
+            #Boat.from_beacon(beacon)
