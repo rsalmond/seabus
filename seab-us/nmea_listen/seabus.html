@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Simple Map</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map"></div>
+    <script>
+    var map;
+    var markers = [];
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 49.30, lng: -123.09},
+            zoom: 14
+        });
+        setInterval(function() {
+            getBoats();
+        }, 1000);
+    }
+    function updateMap(map, data, markers) {
+        for (var marker in markers) {
+            markers[marker].setMap(null);
+        }
+        for (var boat in data.boats) {
+            lat = data.boats[boat].lat;
+            lon = data.boats[boat].lon;
+            var boatLatLon = new google.maps.LatLng(lat, lon);
+            var marker = new google.maps.Marker({
+                position: boatLatLon,
+                title: data.boats[boat].name
+            });
+            marker.setMap(map);
+            markers.push(marker);
+        }
+    }
+    function getBoats() {
+        $.ajax({
+            url: "/seabus"
+        }).done(function( data ) {
+            updateMap(map, data, markers);
+        });
+    }
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6_owKxs3PMZ7XYILxjpxtj90mhJToVJ0&callback=initMap"
+    async defer></script>
+  </body>
+</html>
