@@ -1,0 +1,10 @@
+colorama==0.2.5
+html5lib==0.999
+libais==0.16
+meld3==0.6.10
+requests==2.2.1
+six==1.5.2
+SQLAlchemy==1.0.12
+supervisor==3.0b2
+urllib3==1.7.1
+virtualenv==15.0.1

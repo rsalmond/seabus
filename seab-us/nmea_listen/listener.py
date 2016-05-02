@@ -6,7 +6,7 @@ import logging
 from logging.config import fileConfig
 from pprint import pprint
 
-from models import Boat, Base, engine
+from models import Boat, Telemetry, Base, engine
 
 LISTEN_IP = '10.8.0.1'
 LISTEN_PORT  = 3000
@@ -41,7 +41,7 @@ def decode(message):
             return
 
         try:
-            decoded = ais.decode(payload)
+            decoded = ais.decode(payload, 0)
         except Exception as e:
             log.error('{} trying to decode message {}'.format(e, message))
             return
@@ -77,15 +77,22 @@ def read_payload(fragment):
 
     return data
 
+def is_interesting(beacon):
+    # http://catb.org/gpsd/AIVDM.html#_ais_payload_interpretation
+    return beacon.get('id') > 5
+
 if __name__ == '__main__':
     Base.metadata.create_all(engine)
 
     for data in read_socket():
         beacon = decode(data)
         if beacon is not None:
-            print type(beacon)
-            print beacon.get.__doc__
-            if beacon.get('id', None) != 5:
-                print 'Oddball beacon found:'
-            #    pprint(beacon)
-            #Boat.from_beacon(beacon)
+            if is_interesting(beacon):
+                log.info('Interesting beacon type: {}'.format(beacon.get('id')))
+                log.info(beacon)
+    
+            boat = Boat.from_beacon(beacon)
+            telemetry = Telemetry.from_beacon(beacon)
+            if None not in (boat, telemetry):
+                telemetry.record_for_boat(boat)
+                print telemetry

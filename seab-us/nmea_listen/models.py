@@ -19,6 +19,16 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 Base = declarative_base()
 
+def safe_get_type(some_dict, some_key, some_type):
+   if some_key in some_dict:
+        val = some_dict.get(some_key)
+        try:
+            val = some_type(val)
+        except Exception as e:
+            return
+
+        return val
+
 class ModelBase(Base):
     __abstract__ = True
 
@@ -43,6 +53,7 @@ class ModelBase(Base):
 class Boat(ModelBase):
     __tablename__ = 'boats'
     
+    telemetry = relationship('Telemetry', backref='boat')
     is_seabus = Column(Boolean, default=False)
     mmsi = Column(Integer, nullable=False, unique=True)
     name = Column(String(120), default=None)
@@ -61,6 +72,11 @@ class Boat(ModelBase):
     def from_beacon(cls, beacon):
         """ return existing boat record if present or create and return
         a new one """
+
+        if beacon.get('id') == 4:
+            # msg type 4 is a base station, not a boat
+            return 
+
         mmsi = beacon.get('mmsi')
         
         # cant do anything without an mmsi
@@ -114,10 +130,10 @@ class Boat(ModelBase):
                 self.dim_to_port = int(d2port)
                 self.dim_to_star = int(d2star)
 
-
 class Telemetry(ModelBase):
     __tablename__ = 'telemetry'
-    
+
+    boat_id = Column(Integer, ForeignKey('boats.id'))
     nav_status = Column(Integer)
     pos_accuracy = Column(Integer)
     lon = Column(Float)
@@ -128,10 +144,52 @@ class Telemetry(ModelBase):
     rate_of_turn = Column(Float)
     rate_of_turn_over_range = Column(Boolean)
     timestamp = Column(Integer)
+    received = Column(DateTime, default=dt.utcnow)
 
-    def __init__(self, beacon):
+    def __init__(self):
         pass
 
+    def __repr__(self):
+        return '<% {}, {} %>'.format(self.lat, self.lon)
+
+    @classmethod
+    def from_beacon(cls, beacon):
+        telemetry = Telemetry()
+        telemetry._parse_beacon(beacon)
+        return telemetry
+
+    def is_valid(self):
+        if None in (self.lat, self.lon):
+            return False
+
+        if (self.lat < 0) or (self.lat > 90):
+            return False
+
+        if (self.lon < -180) or (self.lon > 180):
+            return False
+
+        return True
 
     def _parse_beacon(self, beacon):
-        pass 
+        self.nav_status = safe_get_type(beacon, 'nav_status', int)
+        self.pos_accuracy = safe_get_type(beacon, 'position_accuracy', int)
+        self.lon = safe_get_type(beacon, 'x', float)
+        self.lat = safe_get_type(beacon, 'y', float)
+        self.speed_over_ground = safe_get_type(beacon, 'sog', float)
+        self.course_over_ground = safe_get_type(beacon, 'cog', float)
+        self.true_heading = safe_get_type(beacon, 'true_heading', int)
+        self.rate_of_turn = safe_get_type(beacon, 'rot', float)
+        self.rate_of_turn_over_range = safe_get_type(beacon, 'rot_over_range',bool)
+        self.timestamp = safe_get_type(beacon, 'timestamp', int)
+
+    def record_for_boat(self, boat):
+        """
+        """
+        if boat.is_seabus:
+            pass
+        else:
+            # drop all previous telemetry for this boat
+            if self.is_valid():
+                session.query(Telemetry).filter_by(boat_id=boat.id).delete()
+                self.boat_id = boat.id
+                self.save()

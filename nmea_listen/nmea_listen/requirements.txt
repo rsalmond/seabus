@@ -1,3 +1,0 @@
-libais==0.16
-six==1.10.0
-SQLAlchemy==1.0.12
