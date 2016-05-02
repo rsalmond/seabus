@@ -36,10 +36,19 @@
         for (var boat in data.boats) {
             lat = data.boats[boat].lat;
             lon = data.boats[boat].lon;
+            name = data.boats[boat].name;
+            if (name == 'null') {
+                label = '';
+                title = '';
+            } else {
+                label = 'N';
+                title = name;
+            }
             var boatLatLon = new google.maps.LatLng(lat, lon);
             var marker = new google.maps.Marker({
                 position: boatLatLon,
-                title: data.boats[boat].name
+                title: title,
+                label: label
             });
             marker.setMap(map);
             markers.push(marker);
