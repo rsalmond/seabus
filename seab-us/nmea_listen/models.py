@@ -182,11 +182,18 @@ class Telemetry(ModelBase):
         self.rate_of_turn_over_range = safe_get_type(beacon, 'rot_over_range',bool)
         self.timestamp = safe_get_type(beacon, 'timestamp', int)
 
+    @classmethod
+    def latest_for_boat(cls, boat):
+        return session.query(cls).filter_by(boat_id=boat.id).order_by(cls.id.desc()).first()
+
     def record_for_boat(self, boat):
         """
         """
         if boat.is_seabus:
-            pass
+            # record every piece of telemetry for each seabus
+            if self.is_valid():
+                self.boat_id = boat.id
+                self.save()
         else:
             # drop all previous telemetry for this boat
             if self.is_valid():
