@@ -7,9 +7,18 @@ app = Flask(__name__)
 def seabus():
     telemetry = {'boats': []}
     for boat in Boat.all():
-        if len(boat.telemetry) > 0:
-            lat = boat.telemetry[0].lat
-            lon = boat.telemetry[0].lon
+        lat = lon = None
+        if boat.is_seabus:
+            seabus_telemetry = Telemetry.latest_for_boat(boat)
+            if seabus_telemetry is None:
+                continue
+            lat = seabus_telemetry.lat
+            lon = seabus_telemetry.lon
+        else:
+            if len(boat.telemetry) > 0:
+                lat = boat.telemetry[0].lat
+                lon = boat.telemetry[0].lon
+        if None not in (lat, lon):
             name = boat.name
             id = boat.id
             telemetry['boats'].append(
