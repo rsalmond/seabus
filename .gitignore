@@ -1,3 +1,5 @@
 *.venv
 *.env
 *.pyc
+*.tfstate
+*.tfstate.backup
