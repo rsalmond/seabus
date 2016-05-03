@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Simple Map</title>
+    <title>seab us</title>
     <meta name="viewport" content="initial-scale=1.0">
     <meta charset="utf-8">
     <style>
@@ -19,7 +19,7 @@
     <div id="map"></div>
     <script>
     var map;
-    var markers = [];
+    var markers = {};
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
             center: {lat: 49.30, lng: -123.09},
@@ -29,14 +29,26 @@
             getBoats();
         }, 1000);
     }
-    function updateMap(map, data, markers) {
-        for (var marker in markers) {
-            markers[marker].setMap(null);
+    function point_has_moved(old_lat, old_lon, new_lat, new_lon) {
+        ACCURACY = 3;
+        r_new_lat = new_lat.toFixed(ACCURACY);
+        r_new_lon = new_lon.toFixed(ACCURACY);
+        r_old_lat = old_lat.toFixed(ACCURACY);
+        r_old_lon = old_lon.toFixed(ACCURACY);
+        if (r_old_lat != r_new_lat || r_old_lon != r_new_lon) {
+            console.log(r_old_lat, r_old_lon);
+            console.log(r_new_lat, r_new_lon);
+            return true
+        } else {
+            return false;
         }
+    }
+    function updateMap(map, data, markers) {
         for (var boat in data.boats) {
             lat = data.boats[boat].lat;
             lon = data.boats[boat].lon;
             name = data.boats[boat].name;
+            id = data.boats[boat].id;
             if (name == 'null') {
                 label = '';
                 title = '';
@@ -44,19 +56,32 @@
                 label = 'N';
                 title = name;
             }
-            var boatLatLon = new google.maps.LatLng(lat, lon);
-            var marker = new google.maps.Marker({
-                position: boatLatLon,
-                title: title,
-                label: label
-            });
-            marker.setMap(map);
-            markers.push(marker);
+            if (id in markers) {
+                // update an existing marker if its already on the map
+                current_pos = markers[id].getPosition();
+                if (point_has_moved(current_pos.lat(), current_pos.lng(), lat, lon)) {
+                    markers[id].setPosition(new google.maps.LatLng(lat, lon));
+                    markers[id].setAnimation(google.maps.Animation.BOUNCE);
+                    setTimeout(function(marker) {
+                        marker.setAnimation(null);
+                    }, 500, markers[id]);
+                }
+            } else {
+                // create a new marker
+                var boatLatLon = new google.maps.LatLng(lat, lon);
+                var marker = new google.maps.Marker({
+                    position: boatLatLon,
+                    title: title,
+                    label: label
+                });
+                marker.setMap(map);
+                markers[id] = marker;
+            }
         }
     }
     function getBoats() {
         $.ajax({
-            url: "/seabus"
+            url: "/data/v1"
         }).done(function( data ) {
             updateMap(map, data, markers);
         });
