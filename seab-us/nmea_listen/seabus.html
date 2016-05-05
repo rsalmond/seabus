@@ -60,11 +60,16 @@
                 // update an existing marker if its already on the map
                 current_pos = markers[id].getPosition();
                 if (point_has_moved(current_pos.lat(), current_pos.lng(), lat, lon)) {
+                    console.log(name);
                     markers[id].setPosition(new google.maps.LatLng(lat, lon));
                     markers[id].setAnimation(google.maps.Animation.BOUNCE);
                     setTimeout(function(marker) {
                         marker.setAnimation(null);
                     }, 500, markers[id]);
+                } else {
+                    if (name.includes('BURRARD')) {
+                        console.log(name + ' has not moved.');
+                    }
                 }
             } else {
                 // create a new marker
