@@ -69,6 +69,10 @@ class Boat(ModelBase):
         self.save()
 
     @classmethod
+    def all_seabuses(cls):
+        return session.query(cls).filter_by(is_seabus=True).all()
+
+    @classmethod
     def from_beacon(cls, beacon):
         """ return existing boat record if present or create and return
         a new one """
