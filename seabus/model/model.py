@@ -1,7 +1,8 @@
 #from .common.bounding_boxes import WATERFRONT, LONSDALE
-from ..common import bounding_boxes
 import pandas as pd
 import sqlite3
+from shapely.geometry import Point
+from ..common.bounding_boxes import bounds
 
 def loadbus(bus=None):
     con = sqlite3.connect('test.db')
@@ -9,7 +10,11 @@ def loadbus(bus=None):
 
 def label_dockings(data):
     """ add a label to indicate when the bus was stopped at one of the docks """
-    pass
+    for row in data:
+        import pdb
+        pdb.set_trace()
+    #data['point'] = Point(data['lat'], data['lon'])
+    return data
 
 def label_arrive(data):
     """ add a label to indicate when the bus arrives at one of the docks """
@@ -20,3 +25,6 @@ def label_depart(data):
 
 if __name__ == '__main__':
     data = loadbus()
+    print label_dockings(data).head()
+    import pdb
+    pdb.set_trace()

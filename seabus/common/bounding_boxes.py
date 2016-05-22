@@ -1,4 +1,6 @@
 # bounding coords of seabus terminals and boat storage area
+from collections import namedtuple
+from shapely.geometry import Polygon
 
 WATERFRONT = [
     (49.287215, -123.109222),
@@ -20,3 +22,8 @@ PARKING = [
     (49.310482, -123.084663),
     (49.310668, -123.085090)
 ]
+
+bounds = {}
+bounds['WATERFRONT'] = Polygon(WATERFRONT)
+bounds['LONSDALE'] = Polygon(LONSDALE)
+bounds['PARKING'] = Polygon(PARKING)
