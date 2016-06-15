@@ -1,0 +1,4 @@
+# for fiona
+libgdal1-dev
+# for rtree
+libspatialindex-dev
