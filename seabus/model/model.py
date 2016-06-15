@@ -11,7 +11,7 @@ def loadbus(bus=None):
     con = sqlite3.connect('test.db')
     df = pd.read_sql_query('select * from telemetry where boat_id =5', con, parse_dates=['received'], index_col=['received'])
     # geopandas requires this to be called 'geometry' 
-    df['geometry'] = df.apply(lambda y: Point(y.lon, y.lat), axis=1)
+    df['geometry'] = df.apply(lambda y: Point(y.lat, y.lon), axis=1)
     return df
 
 def label_dockings(data):
@@ -35,6 +35,6 @@ if __name__ == '__main__':
     data = loadbus()
     gdf = gpd.GeoDataFrame(data)
     print 'joining'
-    #joined = sjoin(gdf, spots, how='inner', op='contains')
+    joined = sjoin(gdf, spots, how='left', op='contains')
     import pdb
     pdb.set_trace()
