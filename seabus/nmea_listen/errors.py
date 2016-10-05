@@ -1,0 +1,3 @@
+
+class InvalidBeaconError(Exception):
+    pass
