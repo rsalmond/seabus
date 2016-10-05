@@ -20,7 +20,7 @@ def seabus():
             lat = seabus_telemetry.lat
             lon = seabus_telemetry.lon
             # cache for next time
-            cached_telemetry = {'lat': telemetry.lat, 'lon': telemetry.lon}
+            cached_telemetry = {'lat': seabus_telemetry.lat, 'lon': seabus_telemetry.lon}
             mc_client.set(str(boat.mmsi), cached_telemetry)
         else:
             lat = cached_telemetry.get('lat')
