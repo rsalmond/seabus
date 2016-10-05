@@ -2,9 +2,10 @@ import socket
 import os
 import ais
 import StringIO
+import json
 import logging
 from logging.config import fileConfig
-from pprint import pprint
+from memcached import mc_client
 
 from models import Boat, Telemetry, Base, engine
 
@@ -93,6 +94,14 @@ if __name__ == '__main__':
     
             boat = Boat.from_beacon(beacon)
             telemetry = Telemetry.from_beacon(beacon)
+
             if None not in (boat, telemetry):
+                if boat.is_seabus:
+                    # write telemetry to memcached for seabus
+                    cached_telemetry = {'lat': telemetry.lat, 'lon': telemetry.lon}
+                    mc_client.set(str(boat.mmsi), cached_telemetry)
+
+                # write to db for every boat
                 telemetry.record_for_boat(boat)
-                print telemetry
+
+                log.info(telemetry)
