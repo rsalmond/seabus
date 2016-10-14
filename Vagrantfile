@@ -68,7 +68,7 @@ Vagrant.configure(2) do |config|
   # documentation for more information about their specific syntax and use.
    config.vm.provision "shell", inline: <<-SHELL
     sudo apt-get update
-    sudo apt-get install -y git nginx
+    sudo apt-get install -y git nginx python-pip python-dev
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
     git clone git@github.com:rsalmond/seabus.git
     chown vagrant:vagrant seabus -R
