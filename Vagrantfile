@@ -71,7 +71,7 @@ Vagrant.configure(2) do |config|
     sudo apt-get install -y git nginx
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
     git clone git@github.com:rsalmond/seabus.git
-    chown vagrant:vagrant seabus
+    chown vagrant:vagrant seabus -R
     rm /etc/nginx/sites-enabled/default
     cp /home/vagrant/seabus/config/nginx-seabus-dev /etc/nginx/sites-enabled/seabus
     mkdir -p /var/www/seabus
