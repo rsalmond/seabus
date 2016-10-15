@@ -3,6 +3,7 @@ from flask_socketio import SocketIO
 import oboe
 from oboeware import OboeMiddleware
 from seabus.web.blueprint import blueprint
+from seabus.common.database import db
 
 socketio = SocketIO()
 
