@@ -67,14 +67,22 @@ Vagrant.configure(2) do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
    config.vm.provision "shell", inline: <<-SHELL
+    # base requirements setup
     sudo apt-get update
-    sudo apt-get install -y git nginx python-pip python-dev
+    sudo apt-get install -y git nginx python-pip python-dev memcached
+    sudo pip install virtualenv
+    # repo setup
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
     git clone git@github.com:rsalmond/seabus.git
     chown vagrant:vagrant seabus -R
+    sudo -u vagrant virtualenv /home/vagrant/seabus/seabus/.venv
+    . /home/vagrant/seabus/seabus/.venv/bin/activate
+    sudo -u vagrant pip install -r /home/vagrant/seabus/seabus/requirements.txt
+    # nginx setup
     rm /etc/nginx/sites-enabled/default
     cp /home/vagrant/seabus/config/nginx-seabus-dev /etc/nginx/sites-enabled/seabus
-    mkdir -p /var/www/seabus
+    mkdir -p /var/www
+    ln -s /home/vagrant/seabus/seabus/web/static /var/www/seabus
     #TODO: symlink seabus.html
     service nginx reload
    SHELL
