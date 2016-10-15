@@ -5,7 +5,7 @@ from sqlalchemy.ext.declarative import declarative_base, declared_attr
 from sqlalchemy.orm import sessionmaker,relationship, backref
 from sqlalchemy import create_engine, DateTime, Boolean, Column, Integer, String, ForeignKey, Float
 
-from errors import InvalidBeaconError
+from seabus.common.errors import InvalidBeaconError
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -14,7 +14,7 @@ sh.setLevel(logging.DEBUG)
 sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 log.addHandler(sh)
 
-engine = create_engine('sqlite:///{}/test.db'.format(os.path.dirname(os.path.realpath(__file__))))
+engine = create_engine('sqlite:///{}/seabus.db'.format(os.path.dirname(os.path.realpath(__file__))))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 Base = declarative_base()

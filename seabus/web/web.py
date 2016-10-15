@@ -1,11 +1,11 @@
-from models import Boat, Telemetry, engine
 from flask import Flask, jsonify
-from memcached import mc_client
-from oboeware import OboeMiddleware
-from werkzeug.serving import run_simple
 import oboe
+from oboeware import OboeMiddleware
+from seabus.common.models import Boat, Telemetry, engine
+from seabus.common.memcached import mc_client
 
 app = Flask(__name__)
+tv_app = OboeMiddleware(app)
 
 @app.route("/data/v1")
 def seabus():
@@ -39,9 +39,3 @@ def seabus():
 
     return jsonify(telemetry)
 
-if __name__ == '__main__':
-    tv_app = OboeMiddleware(app)
-    if not tv_app:
-        app.run(debug=True)
-    else:
-        run_simple('127.0.0.1', 5000, tv_app)
