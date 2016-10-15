@@ -9,4 +9,4 @@ class Config(object):
 class Dev(Config):
     DEBUG=True
     seabus_project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir))
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/seabus.db'.format(seabus_project_root)
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}/db_seabus.db'.format(seabus_project_root)
