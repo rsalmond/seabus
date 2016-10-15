@@ -1,10 +1,13 @@
 from flask import Flask, jsonify
 import oboe
 from oboeware import OboeMiddleware
-from seabus.common.models import Boat, Telemetry, engine
+from seabus.common.models import Boat, Telemetry
 from seabus.common.memcached import mc_client
+from seabus.common.database import db
 
 app = Flask(__name__)
+app.config.from_object('seabus.web.config.Dev')
+db.init_app(app)
 tv_app = OboeMiddleware(app)
 
 @app.route("/data/v1")

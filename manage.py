@@ -1,11 +1,16 @@
+#!/usr/bin/env python
+
 import flask_migrate
 import flask_script
 
-
-from seabus.web.web import app
 from seabus.web.socketio import socketio
+from seabus.common.database import db
+from seabus.web.web import app
+
 
 manager = flask_script.Manager(app)
+flask_migrate.Migrate(app, db)
+manager.add_command('db', flask_migrate.MigrateCommand)
 
 @manager.command
 def rundev(debug=True, use_reloader=True):
