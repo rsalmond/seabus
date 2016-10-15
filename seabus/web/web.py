@@ -1,10 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask
 from flask_socketio import SocketIO
 import oboe
 from oboeware import OboeMiddleware
-from seabus.common.models import Boat, Telemetry
-from seabus.common.memcached import mc_client
-from seabus.common.database import db
 from seabus.web.blueprint import blueprint
 
 socketio = SocketIO()
