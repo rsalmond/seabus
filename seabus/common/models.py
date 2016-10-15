@@ -28,7 +28,7 @@ class ModelBase(db.Model):
     """ provide some useful common functions for db models """
     __abstract__ = True
 
-    id = db.Column(db.BigInteger, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     @classmethod
     def by_id(cls, id):
