@@ -65,25 +65,20 @@ def decode(message):
 
     return decoded
 
-def read_payload(fragment):
-    data = fragment.strip().split(',')
-    try:
-        data[1] = int(data[1])
-        data[2] = int(data[2])
-    except ValueError as e:
-        print 'bogus data! {}'.format(data)
-
-    return data
-
 def is_interesting(beacon):
     # http://catb.org/gpsd/AIVDM.html#_ais_payload_interpretation
     return beacon.get('id') > 5
 
 
 def listen(config):
+    """ 
+    listen for and process incoming UDP AIS location beacons sent from the AIS Decoder process on the tuner
+    """
     host = config.get('LISTENER_HOST')
     port = config.get('LISTENER_PORT')
+
     log.info('Listenening for AIS beacons on {}:{}'.format(host, port))
+
     for data in read_socket(host, port):
         beacon = decode(data)
         if beacon is not None:
