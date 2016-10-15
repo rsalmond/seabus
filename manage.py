@@ -24,7 +24,7 @@ def rundev(debug=True, use_reloader=True):
 
 @manager.command
 def listener():
-    listen()
+    listen(app.config)
 
 if __name__ == '__main__':
     manager.run()
