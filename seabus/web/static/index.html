@@ -47,13 +47,6 @@
             lon = data.boats[boat].lon;
             name = data.boats[boat].name;
             id = data.boats[boat].id;
-            if (name == 'null') {
-                label = '';
-                title = '';
-            } else {
-                label = 'N';
-                title = name;
-            }
             if (id in markers) {
                 // update an existing marker if its already on the map
                 current_pos = markers[id].getPosition();
@@ -72,14 +65,21 @@
             } else {
                 // create a new marker
                 var boatLatLon = new google.maps.LatLng(lat, lon);
+                icon = setIcon(name);
                 var marker = new google.maps.Marker({
                     position: boatLatLon,
-                    title: title,
-                    label: label
+                    icon: icon
                 });
                 marker.setMap(map);
                 markers[id] = marker;
             }
+        }
+    }
+    function setIcon(name) {
+        if (name.includes('OTTER II') || name.includes('PACIFIC BRZE')) {
+            return 'http://dev.seab.us/img/seabus-wifi.png';
+        } else {
+            return 'http://dev.seab.us/img/seabus.png';
         }
     }
     function getBoatsSocketIO() {
