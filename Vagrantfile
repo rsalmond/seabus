@@ -69,7 +69,7 @@ Vagrant.configure(2) do |config|
    config.vm.provision "shell", inline: <<-SHELL
     # base requirements setup
     sudo apt-get update
-    sudo apt-get install -y git nginx python-pip python-dev memcached
+    sudo apt-get install -y git nginx python-pip python-dev memcached sqlite3
     sudo pip install virtualenv
     # repo setup
     ssh-keyscan -H github.com >> ~/.ssh/known_hosts
