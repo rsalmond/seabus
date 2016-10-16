@@ -25,9 +25,7 @@
             center: {lat: 49.30, lng: -123.09},
             zoom: 14
         });
-        setInterval(function() {
-            getBoats();
-        }, 1000);
+        getBoatsSocketIO();
     }
     function point_has_moved(old_lat, old_lon, new_lat, new_lon) {
         ACCURACY = 3;
@@ -84,14 +82,15 @@
             }
         }
     }
-    function getBoats() {
-        $.ajax({
-            url: "/data/v1"
-        }).done(function( data ) {
+    function getBoatsSocketIO() {
+        var socket = io.connect('/seabus_data')
+        document.beforeUnload = function() { socket.disconnect() }
+        socket.on('seabus_moved', function(data) {
             updateMap(map, data, markers);
         });
     }
     </script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.5.0/socket.io.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6_owKxs3PMZ7XYILxjpxtj90mhJToVJ0&callback=initMap"
     async defer></script>

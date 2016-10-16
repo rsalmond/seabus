@@ -8,26 +8,32 @@ from seabus.common.database import db
 from seabus.web.web import create_app
 from seabus.nmea_listen.listener import listen
 
-app = create_app('Prod')
+app = create_app('Dev')
 manager = flask_script.Manager(app)
 flask_migrate.Migrate(app, db)
 manager.add_command('db', flask_migrate.MigrateCommand)
 
 @manager.command
-def rundev(debug=True, use_reloader=True):
+def webdev():
     socketio.run(
         app,
         host='0.0.0.0',
-        debug=debug,
-        use_reloader=use_reloader,
+        debug=True,
+        use_reloader=True,
     )
 
 @manager.command
-def serveprod():
+def webprod():
+    app.config.from_object('seabus.web.config.Prod')
     socketio.run(app)
 
 @manager.command
-def listener():
+def listendev():
+    listen(app.config)
+
+@manager.command
+def listenprod():
+    app.config.from_object('seabus.web.config.Prod')
     listen(app.config)
 
 if __name__ == '__main__':
