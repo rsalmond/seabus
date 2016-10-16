@@ -8,7 +8,7 @@ from seabus.common.database import db
 from seabus.web.web import create_app
 from seabus.nmea_listen.listener import listen
 
-app = create_app('Dev')
+app = create_app('Prod')
 manager = flask_script.Manager(app)
 flask_migrate.Migrate(app, db)
 manager.add_command('db', flask_migrate.MigrateCommand)
@@ -21,6 +21,10 @@ def rundev(debug=True, use_reloader=True):
         debug=debug,
         use_reloader=use_reloader,
     )
+
+@manager.command
+def serveprod():
+    socketio.run(app)
 
 @manager.command
 def listener():
