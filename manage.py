@@ -24,6 +24,7 @@ def webdev():
 
 @manager.command
 def webprod():
+    app.config.from_object('seabus.web.config.Prod')
     socketio.run(app)
 
 @manager.command
