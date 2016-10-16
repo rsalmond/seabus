@@ -6,6 +6,7 @@ import ais
 import StringIO
 import json
 import logging
+import requests
 from logging.config import fileConfig
 
 from seabus.common.memcached import mc_client
@@ -97,5 +98,6 @@ def listen(config):
 
                 # write to db for every boat
                 telemetry.record_for_boat(boat)
-
+                # notify web app that new data is available for push to clients
+                requests.get('http://localhost/update')
                 log.info(telemetry)
