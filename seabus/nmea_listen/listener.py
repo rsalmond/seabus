@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import socket
 import os
 import ais
@@ -5,14 +7,9 @@ import StringIO
 import json
 import logging
 from logging.config import fileConfig
-from memcached import mc_client
 
-from models import Boat, Telemetry, Base, engine
-
-LISTEN_IP = '10.8.0.1'
-LISTEN_PORT  = 3000
-#LISTEN_IP = '0.0.0.0'
-#LISTEN_PORT  = 3001
+from seabus.common.memcached import mc_client
+from seabus.common.models import Boat, Telemetry
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -21,9 +18,9 @@ sh.setLevel(logging.DEBUG)
 sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 log.addHandler(sh)
 
-def read_socket():
+def read_socket(host, port):
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind((LISTEN_IP, LISTEN_PORT))
+    sock.bind((host, port))
 
     while True:
         message, addr = sock.recvfrom(1024)
@@ -68,24 +65,21 @@ def decode(message):
 
     return decoded
 
-def read_payload(fragment):
-    data = fragment.strip().split(',')
-    try:
-        data[1] = int(data[1])
-        data[2] = int(data[2])
-    except ValueError as e:
-        print 'bogus data! {}'.format(data)
-
-    return data
-
 def is_interesting(beacon):
     # http://catb.org/gpsd/AIVDM.html#_ais_payload_interpretation
     return beacon.get('id') > 5
 
-if __name__ == '__main__':
-    Base.metadata.create_all(engine)
 
-    for data in read_socket():
+def listen(config):
+    """ 
+    listen for and process incoming UDP AIS location beacons sent from the AIS Decoder process on the tuner
+    """
+    host = config.get('LISTENER_HOST')
+    port = config.get('LISTENER_PORT')
+
+    log.info('Listenening for AIS beacons on {}:{}'.format(host, port))
+
+    for data in read_socket(host, port):
         beacon = decode(data)
         if beacon is not None:
             if is_interesting(beacon):

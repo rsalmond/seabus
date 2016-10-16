@@ -1,11 +1,11 @@
+from __future__ import absolute_import
+
 import os
 import logging
 from datetime import datetime as dt
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy.orm import sessionmaker,relationship, backref
-from sqlalchemy import create_engine, DateTime, Boolean, Column, Integer, String, ForeignKey, Float
 
-from errors import InvalidBeaconError
+from seabus.common.database import db
+from seabus.common.errors import InvalidBeaconError
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -13,11 +13,6 @@ sh = logging.StreamHandler()
 sh.setLevel(logging.DEBUG)
 sh.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 log.addHandler(sh)
-
-engine = create_engine('sqlite:///{}/test.db'.format(os.path.dirname(os.path.realpath(__file__))))
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
-Base = declarative_base()
 
 def safe_get_type(some_dict, some_key, some_type):
    if some_key in some_dict:
@@ -29,40 +24,41 @@ def safe_get_type(some_dict, some_key, some_type):
 
         return val
 
-class ModelBase(Base):
+class ModelBase(db.Model):
+    """ provide some useful common functions for db models """
     __abstract__ = True
 
-    id = Column(Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
     @classmethod
     def by_id(cls, id):
-        return session.query(cls).filter_by(id=id).first()
+        return db.session.query(cls).filter_by(id=id).first()
 
     @classmethod
     def all(cls):
-        return session.query(cls).all()
+        return db.session.query(cls).all()
 
     @classmethod
     def count(cls):
-        return session.query(cls).count()
+        return db.session.query(cls).count()
 
     def save(self):
-        session.add(self)
-        session.commit()
+        db.session.add(self)
+        db.session.commit()
 
 class Boat(ModelBase):
     __tablename__ = 'boats'
     
-    telemetry = relationship('Telemetry', backref='boat')
-    is_seabus = Column(Boolean, default=False)
-    mmsi = Column(Integer, nullable=False, unique=True)
-    name = Column(String(120), default=None)
-    dim_to_bow = Column(Integer, default=None)
-    dim_to_stern = Column(Integer, default=None)
-    dim_to_port = Column(Integer, default=None)
-    dim_to_star = Column(Integer, default=None)
-    type_and_cargo = Column(Integer, default=None)
-    lastseen_on = Column(DateTime, default = dt.utcnow)
+    telemetry = db.relationship('Telemetry', backref='boat')
+    is_seabus = db.Column(db.Boolean, default=False)
+    mmsi = db.Column(db.Integer, nullable=False, unique=True)
+    name = db.Column(db.String(120), default=None)
+    dim_to_bow = db.Column(db.Integer, default=None)
+    dim_to_stern = db.Column(db.Integer, default=None)
+    dim_to_port = db.Column(db.Integer, default=None)
+    dim_to_star = db.Column(db.Integer, default=None)
+    type_and_cargo = db.Column(db.Integer, default=None)
+    lastseen_on = db.Column(db.DateTime, default = dt.utcnow)
 
     def __init__(self, mmsi):
         self.mmsi = mmsi
@@ -70,7 +66,7 @@ class Boat(ModelBase):
 
     @classmethod
     def all_seabuses(cls):
-        return session.query(cls).filter_by(is_seabus=True).all()
+        return db.session.query(cls).filter_by(is_seabus=True).all()
 
     @classmethod
     def from_beacon(cls, beacon):
@@ -87,7 +83,7 @@ class Boat(ModelBase):
         if mmsi is None:
             raise InvalidBeaconError
 
-        boat = session.query(cls).filter_by(mmsi=mmsi).first()
+        boat = db.session.query(cls).filter_by(mmsi=mmsi).first()
 
         if boat is None:
             boat = Boat(mmsi)
@@ -137,18 +133,18 @@ class Boat(ModelBase):
 class Telemetry(ModelBase):
     __tablename__ = 'telemetry'
 
-    boat_id = Column(Integer, ForeignKey('boats.id'))
-    nav_status = Column(Integer)
-    pos_accuracy = Column(Integer)
-    lon = Column(Float)
-    lat = Column(Float)
-    speed_over_ground = Column(Float)
-    course_over_ground = Column(Float)
-    true_heading = Column(Integer)
-    rate_of_turn = Column(Float)
-    rate_of_turn_over_range = Column(Boolean)
-    timestamp = Column(Integer)
-    received = Column(DateTime, default=dt.utcnow)
+    boat_id = db.Column(db.Integer, db.ForeignKey('boats.id'))
+    nav_status = db.Column(db.Integer)
+    pos_accuracy = db.Column(db.Integer)
+    lon = db.Column(db.Float)
+    lat = db.Column(db.Float)
+    speed_over_ground = db.Column(db.Float)
+    course_over_ground = db.Column(db.Float)
+    true_heading = db.Column(db.Integer)
+    rate_of_turn = db.Column(db.Float)
+    rate_of_turn_over_range = db.Column(db.Boolean)
+    timestamp = db.Column(db.Integer)
+    received = db.Column(db.DateTime, default=dt.utcnow)
 
     def __init__(self):
         pass
@@ -188,7 +184,7 @@ class Telemetry(ModelBase):
 
     @classmethod
     def latest_for_boat(cls, boat):
-        return session.query(cls).filter_by(boat_id=boat.id).order_by(cls.id.desc()).first()
+        return db.session.query(cls).filter_by(boat_id=boat.id).order_by(cls.id.desc()).first()
 
     def record_for_boat(self, boat):
         """
@@ -201,6 +197,6 @@ class Telemetry(ModelBase):
         else:
             # drop all previous telemetry for this boat
             if self.is_valid():
-                session.query(Telemetry).filter_by(boat_id=boat.id).delete()
+                db.session.query(Telemetry).filter_by(boat_id=boat.id).delete()
                 self.boat_id = boat.id
                 self.save()
