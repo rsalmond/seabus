@@ -1,7 +1,7 @@
-#seabus
+#Seab.us
 =======
 
-Here's most of the code for the app which drives [seab.us](http://seab.us).
+Here's the code for the app which drives [seab.us](http://seab.us).
 
 #Listener
 The [listener](seabus/nmea_listen/listener.py) program receives and processses marine telemetry data relayed from a raspberry pi with an [RTL-SDR](http://www.rtl-sdr.com/about-rtl-sdr/) tuner running [aisdecoder](https://github.com/sailoog/aisdecoder) to decode [AIS beacons](https://en.wikipedia.org/wiki/Automatic_identification_system).
