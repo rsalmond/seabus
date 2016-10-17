@@ -83,7 +83,6 @@ Vagrant.configure(2) do |config|
     cp /home/vagrant/seabus/config/nginx-seabus-dev /etc/nginx/sites-enabled/seabus
     mkdir -p /var/www
     ln -s /home/vagrant/seabus/seabus/web/static /var/www/seabus
-    #TODO: symlink seabus.html
     service nginx reload
    SHELL
 end
