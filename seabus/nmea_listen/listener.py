@@ -77,6 +77,7 @@ def listen(config):
     """
     host = config.get('LISTENER_HOST')
     port = config.get('LISTENER_PORT')
+    update_url = config.get('LISTENER_UPDATE_URL')
 
     log.info('Listenening for AIS beacons on {}:{}'.format(host, port))
 
@@ -92,12 +93,14 @@ def listen(config):
 
             if None not in (boat, telemetry):
                 if boat.is_seabus:
+                    log.info('Seabus: {}'.format(telemetry))
                     # write telemetry to memcached for seabus
                     cached_telemetry = {'lat': telemetry.lat, 'lon': telemetry.lon}
                     mc_client.set(str(boat.mmsi), cached_telemetry)
+                    # notify web app that new data is available for push to clients
+                    requests.get(update_url)
+                else:
+                    log.info(telemetry)
 
                 # write to db for every boat
                 telemetry.record_for_boat(boat)
-                # notify web app that new data is available for push to clients
-                requests.get('http://localhost/update')
-                log.info(telemetry)
