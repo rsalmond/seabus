@@ -1,98 +1,17 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>seab us</title>
+    <title>seab.us</title>
     <meta name="viewport" content="initial-scale=1.0">
     <meta charset="utf-8">
-    <style>
-      html, body {
-        height: 100%;
-        margin: 0;
-        padding: 0;
-      }
-      #map {
-        height: 100%;
-      }
-    </style>
+    <link href="/css/seabus.css" rel="stylesheet">
   </head>
   <body>
     <div id="map"></div>
-    <script>
-    var map;
-    var markers = {};
-    function initMap() {
-        map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 49.2985, lng: -123.0957},
-            zoom: 14
-        });
-        getBoatsSocketIO();
-    }
-    function point_has_moved(old_lat, old_lon, new_lat, new_lon) {
-        ACCURACY = 3;
-        r_new_lat = new_lat.toFixed(ACCURACY);
-        r_new_lon = new_lon.toFixed(ACCURACY);
-        r_old_lat = old_lat.toFixed(ACCURACY);
-        r_old_lon = old_lon.toFixed(ACCURACY);
-        if (r_old_lat != r_new_lat || r_old_lon != r_new_lon) {
-            console.log(r_old_lat, r_old_lon);
-            console.log(r_new_lat, r_new_lon);
-            return true
-        } else {
-            return false;
-        }
-    }
-    function updateMap(map, data, markers) {
-        for (var boat in data.boats) {
-            lat = data.boats[boat].lat;
-            lon = data.boats[boat].lon;
-            name = data.boats[boat].name;
-            id = data.boats[boat].id;
-            if (id in markers) {
-                // update an existing marker if its already on the map
-                current_pos = markers[id].getPosition();
-                if (point_has_moved(current_pos.lat(), current_pos.lng(), lat, lon)) {
-                    console.log(name);
-                    markers[id].setPosition(new google.maps.LatLng(lat, lon));
-                    markers[id].setAnimation(google.maps.Animation.BOUNCE);
-                    setTimeout(function(marker) {
-                        marker.setAnimation(null);
-                    }, 500, markers[id]);
-                } else {
-                    if (name.includes('BURRARD')) {
-                        console.log(name + ' has not moved.');
-                    }
-                }
-            } else {
-                // create a new marker
-                var boatLatLon = new google.maps.LatLng(lat, lon);
-                icon = setIcon(name);
-                var marker = new google.maps.Marker({
-                    position: boatLatLon,
-                    icon: icon
-                });
-                marker.setMap(map);
-                markers[id] = marker;
-            }
-        }
-    }
-    function setIcon(name) {
-        if (name.includes('OTTER II') || name.includes('PACIFIC BRZE')) {
-            return '/img/seabus-wifi.png';
-        } else {
-            return '/img/seabus.png';
-        }
-    }
-    function getBoatsSocketIO() {
-        var socket = io.connect('/seabus_data')
-        document.beforeUnload = function() { socket.disconnect() }
-        socket.on('seabus_moved', function(data) {
-            updateMap(map, data, markers);
-        });
-    }
-    </script>
+    <script type="text/javascript" src="/js/analytics.js"></script>
+    <script type="text/javascript" src="/js/seabus.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.5.0/socket.io.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6_owKxs3PMZ7XYILxjpxtj90mhJToVJ0&callback=initMap"
-    async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD6_owKxs3PMZ7XYILxjpxtj90mhJToVJ0&callback=initMap" async defer></script>
   </body>
 </html>
