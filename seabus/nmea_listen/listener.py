@@ -98,7 +98,12 @@ def listen(config):
                     cached_telemetry = {'lat': telemetry.lat, 'lon': telemetry.lon}
                     mc_client.set(str(boat.mmsi), cached_telemetry)
                     # notify web app that new data is available for push to clients
-                    requests.get(update_url)
+                    try:
+                        resp = requests.get(update_url)
+                    except requests.exceptions.ConnectionError as e:
+                        log.error('Unable to reach /update endpoint! {}'.format(e))
+                    if not resp.ok:
+                        log.error('Bad response code: {}, msg: {}'.format(resp.status_code, resp.text))
                 else:
                     log.info(telemetry)
 
