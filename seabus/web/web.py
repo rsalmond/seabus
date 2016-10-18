@@ -17,4 +17,4 @@ def create_app(config=None):
     app.register_blueprint(blueprint)
     db.init_app(app)
     tv_app = OboeMiddleware(app)
-    return app
+    return tv_app
