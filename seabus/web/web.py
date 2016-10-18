@@ -16,5 +16,5 @@ def create_app(config=None):
     socketio.init_app(app)
     app.register_blueprint(blueprint)
     db.init_app(app)
-    tv_app = OboeMiddleware(app)
-    return tv_app
+    app.wsgi_app = OboeMiddleware(app.wsgi_app)
+    return app
