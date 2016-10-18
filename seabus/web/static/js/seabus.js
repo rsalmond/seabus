@@ -41,7 +41,6 @@ function updateMap(map, data, markers) {
             if (point_has_moved(current_pos.lat(), current_pos.lng(), lat, lon)) {
                 console.log(name);
                 markers[id].setPosition(new google.maps.LatLng(lat, lon));
-                markers[id].setAnimation(google.maps.Animation.BOUNCE);
                 setTimeout(function(marker) {
                     marker.setAnimation(null);
                 }, 500, markers[id]);
@@ -54,7 +53,8 @@ function updateMap(map, data, markers) {
             // create a new marker
             var boatLatLon = new google.maps.LatLng(lat, lon);
             icon = setIcon(name);
-            var marker = new google.maps.Marker({
+            //var marker = new google.maps.Marker({
+            var marker = new SlidingMarker({
                 position: boatLatLon,
                 icon: icon
             });
@@ -79,6 +79,7 @@ function getBoatsSocketIO() {
     document.beforeUnload = function() { socket.disconnect() }
     socket.on('seabus_moved', function(data) {
         updateMap(map, data, markers);
+        console.log('seabus_moved event received');
     });
 }
 
