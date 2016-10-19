@@ -5,6 +5,7 @@ import logging
 from datetime import datetime as dt
 
 from seabus.common.database import db
+from seabus.common.memcached import mc_client
 from seabus.common.errors import InvalidBeaconError
 
 log = logging.getLogger(__name__)
@@ -183,20 +184,72 @@ class Telemetry(ModelBase):
         self.timestamp = safe_get_type(beacon, 'timestamp', int)
 
     @classmethod
-    def latest_for_boat(cls, boat):
+    def from_db_for_boat(cls, boat):
         return db.session.query(cls).filter_by(boat_id=boat.id).order_by(cls.id.desc()).first()
 
-    def record_for_boat(self, boat):
+    def set_boat(self, boat):
+        self.boat_id = boat.id
+
+    def smart_save(self):
         """
+        Save all telemetry for Seabuses, only latest telemetry for everyone else
         """
-        if boat.is_seabus:
+        if Boat.by_id(self.boat_id).is_seabus:
             # record every piece of telemetry for each seabus
             if self.is_valid():
-                self.boat_id = boat.id
                 self.save()
         else:
             # drop all previous telemetry for this boat
             if self.is_valid():
                 db.session.query(Telemetry).filter_by(boat_id=boat.id).delete()
-                self.boat_id = boat.id
                 self.save()
+
+    def mc_key(self):
+        """ key based on class name + boat id should keep memcache pretty clear of junk """
+        #XXX: this will throw some horrible exception if called before boat_id is set
+        return '{}_{}'.format(str(self.__class__.__name__), self.boat_id)
+
+    def put_cache(self):
+        """ write a dict of this telemetry to memcached """
+        to_cache = {}
+
+        for k, v in self.__dict__.iteritems():
+            # skip hidden props, _sa_instance_state, etc
+            if not k.startswith('_'):
+                to_cache[k] = v
+
+        log.debug('Writing cache key: {}'.format(self.mc_key()))
+        log.debug('Writing cache repr: {}'.format(self))
+        mc_client.set(self.mc_key(), to_cache)
+        
+    @classmethod
+    def from_cache_for_boat(cls, boat):
+        """ recreate a telemetry object from memcached contents """
+        
+        key = '{}_{}'.format(cls.__name__, boat.id)
+
+        log.debug('Reading cache key {}'.format(key))
+
+        cached = mc_client.get(key)
+        log.debug('Cached: {} {}'.format(cached.get('lat'), cached.get('lon')))
+
+        if cached is not None:
+            t_obj = Telemetry()
+            t_obj.boat_id = boat.id
+            for k, v in cached.iteritems():
+                if k == 'received':
+                    t_obj.received = dt.fromtimestamp(v)
+                else:
+                    setattr(t_obj, k, v)
+            log.debug('Telemetry Object: {}'.format(t_obj))
+            return t_obj
+
+    @classmethod
+    def get_for_boat(cls, boat):
+        """ try to fetch from cache first, if not grab from db and cache for next time """
+        telemetry = Telemetry.from_cache_for_boat(boat)
+        if not telemetry:
+            telemetry = Telemetry.from_db_for_boat(boat)
+            telemetry.put_cache()
+
+        return telemetry

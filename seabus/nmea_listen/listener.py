@@ -9,7 +9,6 @@ import logging
 import requests
 from logging.config import fileConfig
 
-from seabus.common.memcached import mc_client
 from seabus.common.models import Boat, Telemetry
 
 log = logging.getLogger(__name__)
@@ -87,16 +86,19 @@ def listen(config):
             if is_interesting(beacon):
                 log.info('Interesting beacon type: {}'.format(beacon.get('id')))
                 log.info(beacon)
-    
+
+            # extract boat data from beacon 
             boat = Boat.from_beacon(beacon)
+            # extract telemetry data from beacon
             telemetry = Telemetry.from_beacon(beacon)
+            # mark this telemetry as belonging to source boat
+            telemetry.set_boat(boat)
 
             if None not in (boat, telemetry):
                 if boat.is_seabus:
-                    log.info('Seabus: {}'.format(telemetry))
-                    # write telemetry to memcached for seabus
-                    cached_telemetry = {'lat': telemetry.lat, 'lon': telemetry.lon}
-                    mc_client.set(str(boat.mmsi), cached_telemetry)
+                    log.info('Seabus: {}, {}'.format(boat.name, telemetry))
+                    # cache this telemetry for immediate use in the web app
+                    telemetry.put_cache()
                     # notify web app that new data is available for push to clients
                     try:
                         resp = requests.get(update_url)
@@ -104,8 +106,10 @@ def listen(config):
                         log.error('Unable to reach /update endpoint! {}'.format(e))
                     if not resp.ok:
                         log.error('Bad response code: {}, msg: {}'.format(resp.status_code, resp.text))
+                    else:
+                        log.debug('Web app /update endpoint hit.')
                 else:
                     log.info(telemetry)
 
-                # write to db for every boat
-                telemetry.record_for_boat(boat)
+                # now write to db
+                telemetry.smart_save()
