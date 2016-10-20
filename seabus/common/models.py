@@ -242,7 +242,9 @@ class Telemetry(ModelBase):
     @classmethod
     def from_cache_for_boat(cls, boat):
         key = '{}_{}'.format(cls.__name__, boat.id)
-        return pickle.loads(mc_client.get(key))
+        cached = mc_client.get(key)
+        if cached is not None:
+            return pickle.loads(cached)
 
     @classmethod
     def get_for_boat(cls, boat):
