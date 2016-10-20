@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import os
 import logging
+import pickle
 from datetime import datetime as dt
 
 from seabus.common.database import db
@@ -48,6 +49,9 @@ class ModelBase(db.Model):
         db.session.commit()
 
 class Boat(ModelBase):
+    """
+    Everetying related to the boat metadata coming in via http://catb.org/gpsd/AIVDM.html#_type_5_static_and_voyage_related_data
+    """
     __tablename__ = 'boats'
     
     telemetry = db.relationship('Telemetry', backref='boat')
@@ -138,6 +142,9 @@ class Boat(ModelBase):
                 self.dim_to_star = int(d2star)
 
 class Telemetry(ModelBase):
+    """
+    Everything related to position, heading, etc coming in via http://catb.org/gpsd/AIVDM.html#_types_1_2_and_3_position_report_class_a
+    """
     __tablename__ = 'telemetry'
 
     boat_id = db.Column(db.Integer, db.ForeignKey('boats.id'))
@@ -159,11 +166,24 @@ class Telemetry(ModelBase):
     def __repr__(self):
         return '<% {}, {} %>'.format(self.lat, self.lon)
 
+    def __eq__(self, other):
+        """ for testing, compare all columns for equality """
+        if not isinstance(other, Telemetry):
+            return False
+
+        for k, v in self.__dict__.iteritems():
+            if not k.startswith('_'):
+                if getattr(self, k) != getattr(other, k):
+                    return False
+
+        return True
+
     @classmethod
     def from_beacon(cls, beacon):
         telemetry = Telemetry()
         telemetry._parse_beacon(beacon)
-        return telemetry
+        if telemetry.is_valid():
+            return telemetry
 
     def is_valid(self):
         if None in (self.lat, self.lon):
@@ -210,45 +230,19 @@ class Telemetry(ModelBase):
                 db.session.query(Telemetry).filter_by(boat_id=boat.id).delete()
                 self.save()
 
-    def mc_key(self):
+    def _mc_key(self):
         """ key based on class name + boat id should keep memcache pretty clear of junk """
-        #XXX: this will throw some horrible exception if called before boat_id is set
+        assert self.boat_id is not None
         return '{}_{}'.format(str(self.__class__.__name__), self.boat_id)
 
     def put_cache(self):
-        """ write a dict of this telemetry to memcached """
-        to_cache = {}
+        """ write this telemetry to memcached """
+        mc_client.set(self._mc_key(), pickle.dumps(self))
 
-        for k, v in self.__dict__.iteritems():
-            # skip hidden props, _sa_instance_state, etc
-            if not k.startswith('_'):
-                to_cache[k] = v
-
-        log.debug('Writing cache key: {}'.format(self.mc_key()))
-        log.debug('Writing cache repr: {}'.format(self))
-        mc_client.set(self.mc_key(), to_cache)
-        
     @classmethod
     def from_cache_for_boat(cls, boat):
-        """ recreate a telemetry object from memcached contents """
-        
         key = '{}_{}'.format(cls.__name__, boat.id)
-
-        log.debug('Reading cache key {}'.format(key))
-
-        cached = mc_client.get(key)
-        log.debug('Cached: {} {}'.format(cached.get('lat'), cached.get('lon')))
-
-        if cached is not None:
-            t_obj = Telemetry()
-            t_obj.boat_id = boat.id
-            for k, v in cached.iteritems():
-                if k == 'received':
-                    t_obj.received = dt.fromtimestamp(v)
-                else:
-                    setattr(t_obj, k, v)
-            log.debug('Telemetry Object: {}'.format(t_obj))
-            return t_obj
+        return pickle.loads(mc_client.get(key))
 
     @classmethod
     def get_for_boat(cls, boat):
