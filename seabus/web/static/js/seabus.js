@@ -80,6 +80,7 @@ var seabus = {
         socket.on('seabus_moved', function(data) {
             that.updateMap(data);
             console.log('seabus_moved event received');
+            console.log(data);
         });
     },
 

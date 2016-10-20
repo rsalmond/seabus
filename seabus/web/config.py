@@ -4,7 +4,10 @@ import seabus
 class Config(object):
     DEBUG = False
     TESTING = False
-    SQLALCHEMY_DATABASE_URI = 'sqlite://:memory:'
+    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+
+class Test(Config):
+    TESTING = True
 
 class Dev(Config):
     DEBUG=True

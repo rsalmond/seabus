@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from flask_socketio import SocketIO, emit
-from seabus.common.telemetry import fetch_telemetry
+from seabus.common.telemetry import seabus_telemetry
 
 socketio = SocketIO()
 
@@ -9,5 +9,5 @@ def on_connect():
     """
     send initial telemetry on client connect
     """
-    telemetry = fetch_telemetry()
+    telemetry = seabus_telemetry()
     emit('seabus_moved', telemetry)

@@ -42,5 +42,12 @@ def listenprod():
     app.config.from_object('seabus.web.config.Prod')
     listen(app.config)
 
+
+@manager.command
+def debug():
+    from seabus.common.models import Telemetry, Boat
+    import pdb
+    pdb.set_trace()
+
 if __name__ == '__main__':
     manager.run()

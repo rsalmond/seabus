@@ -2,9 +2,11 @@ from __future__ import absolute_import
 
 import os
 import logging
+import pickle
 from datetime import datetime as dt
 
 from seabus.common.database import db
+from seabus.common.memcached import mc_client
 from seabus.common.errors import InvalidBeaconError
 
 log = logging.getLogger(__name__)
@@ -47,6 +49,9 @@ class ModelBase(db.Model):
         db.session.commit()
 
 class Boat(ModelBase):
+    """
+    Everetying related to the boat metadata coming in via http://catb.org/gpsd/AIVDM.html#_type_5_static_and_voyage_related_data
+    """
     __tablename__ = 'boats'
     
     telemetry = db.relationship('Telemetry', backref='boat')
@@ -59,6 +64,9 @@ class Boat(ModelBase):
     dim_to_star = db.Column(db.Integer, default=None)
     type_and_cargo = db.Column(db.Integer, default=None)
     lastseen_on = db.Column(db.DateTime, default = dt.utcnow)
+
+    # hard coded from observing data
+    seabus_mmsis = [316014621, 316028554, 316011651, 316011649]
 
     def __init__(self, mmsi):
         self.mmsi = mmsi
@@ -90,6 +98,9 @@ class Boat(ModelBase):
         else:
             # if we've seen this boat before update lastseen time
             boat.lastseen_on = dt.utcnow()
+
+        if boat.mmsi in Boat.seabus_mmsis:
+            boat.is_seabus = True
 
         boat._parse_beacon(beacon)
         boat.save()
@@ -131,6 +142,9 @@ class Boat(ModelBase):
                 self.dim_to_star = int(d2star)
 
 class Telemetry(ModelBase):
+    """
+    Everything related to position, heading, etc coming in via http://catb.org/gpsd/AIVDM.html#_types_1_2_and_3_position_report_class_a
+    """
     __tablename__ = 'telemetry'
 
     boat_id = db.Column(db.Integer, db.ForeignKey('boats.id'))
@@ -152,11 +166,24 @@ class Telemetry(ModelBase):
     def __repr__(self):
         return '<% {}, {} %>'.format(self.lat, self.lon)
 
+    def __eq__(self, other):
+        """ for testing, compare all columns for equality """
+        if not isinstance(other, Telemetry):
+            return False
+
+        for k, v in self.__dict__.iteritems():
+            if not k.startswith('_'):
+                if getattr(self, k) != getattr(other, k):
+                    return False
+
+        return True
+
     @classmethod
     def from_beacon(cls, beacon):
         telemetry = Telemetry()
         telemetry._parse_beacon(beacon)
-        return telemetry
+        if telemetry.is_valid():
+            return telemetry
 
     def is_valid(self):
         if None in (self.lat, self.lon):
@@ -183,20 +210,48 @@ class Telemetry(ModelBase):
         self.timestamp = safe_get_type(beacon, 'timestamp', int)
 
     @classmethod
-    def latest_for_boat(cls, boat):
+    def from_db_for_boat(cls, boat):
         return db.session.query(cls).filter_by(boat_id=boat.id).order_by(cls.id.desc()).first()
 
-    def record_for_boat(self, boat):
+    def set_boat(self, boat):
+        self.boat_id = boat.id
+
+    def smart_save(self):
         """
+        Save all telemetry for Seabuses, only latest telemetry for everyone else
         """
-        if boat.is_seabus:
+        if Boat.by_id(self.boat_id).is_seabus:
             # record every piece of telemetry for each seabus
             if self.is_valid():
-                self.boat_id = boat.id
                 self.save()
         else:
             # drop all previous telemetry for this boat
             if self.is_valid():
                 db.session.query(Telemetry).filter_by(boat_id=boat.id).delete()
-                self.boat_id = boat.id
                 self.save()
+
+    def _mc_key(self):
+        """ key based on class name + boat id should keep memcache pretty clear of junk """
+        assert self.boat_id is not None
+        return '{}_{}'.format(str(self.__class__.__name__), self.boat_id)
+
+    def put_cache(self):
+        """ write this telemetry to memcached """
+        mc_client.set(self._mc_key(), pickle.dumps(self))
+
+    @classmethod
+    def from_cache_for_boat(cls, boat):
+        key = '{}_{}'.format(cls.__name__, boat.id)
+        cached = mc_client.get(key)
+        if cached is not None:
+            return pickle.loads(cached)
+
+    @classmethod
+    def get_for_boat(cls, boat):
+        """ try to fetch from cache first, if not grab from db and cache for next time """
+        telemetry = Telemetry.from_cache_for_boat(boat)
+        if not telemetry:
+            telemetry = Telemetry.from_db_for_boat(boat)
+            telemetry.put_cache()
+
+        return telemetry
