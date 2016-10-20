@@ -87,19 +87,27 @@ def listen(config):
                 log.info('Interesting beacon type: {}'.format(beacon.get('id')))
                 log.info(beacon)
 
-            # extract boat data from beacon 
+            # extract boat data from beacon, here we should get one of the following (ALL CASES ARE STORED IN DB!)
+            #  - an existing boat record from the db by checking mmsi in the beacon
+            #  - a new boat object with no name, dimensions, etc. because this is a telemetry beacon
+            #  - a new (or updated by this beacon) boat object with name, dimensions, etc. because this is a type 5 static voyage data beacon
             boat = Boat.from_beacon(beacon)
-            # extract telemetry data from beacon
+
+            # try to extract telemetry data from beacon
             telemetry = Telemetry.from_beacon(beacon)
-            # mark this telemetry as belonging to source boat
+
+            # if this beacon has telemetry, mark it as belonging to source boat
             if telemetry is not None:
                 telemetry.set_boat(boat)
 
+            # if we know BOTH the vessel and the telemetry, it's worth recording new information
             if None not in (boat, telemetry):
                 if boat.is_seabus:
                     log.info('Seabus: {}, {}'.format(boat.name, telemetry))
+
                     # cache this telemetry for immediate use in the web app
                     telemetry.put_cache()
+
                     # notify web app that new data is available for push to clients
                     try:
                         resp = requests.get(update_url)
@@ -110,7 +118,7 @@ def listen(config):
                     else:
                         log.debug('Web app /update endpoint hit.')
                 else:
-                    log.info(telemetry)
+                    log.info('Other Vessel: {}, {}'.format(boat.name, telemetry))
 
                 # now write to db
                 telemetry.smart_save()
