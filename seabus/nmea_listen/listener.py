@@ -92,7 +92,8 @@ def listen(config):
             # extract telemetry data from beacon
             telemetry = Telemetry.from_beacon(beacon)
             # mark this telemetry as belonging to source boat
-            telemetry.set_boat(boat)
+            if telemetry is not None:
+                telemetry.set_boat(boat)
 
             if None not in (boat, telemetry):
                 if boat.is_seabus:
