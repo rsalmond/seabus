@@ -9,6 +9,8 @@ from seabus.web.web import create_app
 from seabus.nmea_listen.listener import listen
 
 app = create_app('Dev')
+#tv_app = create_app('Dev')
+#app = tv_app.wrapped_app
 manager = flask_script.Manager(app)
 flask_migrate.Migrate(app, db)
 manager.add_command('db', flask_migrate.MigrateCommand)
@@ -25,7 +27,11 @@ def webdev():
 @manager.command
 def webprod():
     app.config.from_object('seabus.web.config.Prod')
-    socketio.run(app)
+    socketio.run(
+        app,
+        debug=False,
+        use_reloader=False,
+    )
 
 @manager.command
 def listendev():

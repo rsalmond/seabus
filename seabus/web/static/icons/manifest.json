@@ -1,0 +1,13 @@
+{
+	"name": "Seab.us",
+	"icons": [
+		{
+			"src": "\/icons\/android-chrome-192x192.png",
+			"sizes": "192x192",
+			"type": "image\/png"
+		}
+	],
+	"theme_color": "#ffffff",
+	"start_url": "http:\/\/seab.us",
+	"display": "standalone"
+}
