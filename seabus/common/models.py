@@ -227,7 +227,7 @@ class Telemetry(ModelBase):
         else:
             # drop all previous telemetry for this boat
             if self.is_valid():
-                db.session.query(Telemetry).filter_by(boat_id=boat.id).delete()
+                db.session.query(Telemetry).filter_by(boat_id=self.boat_id).delete()
                 self.save()
 
     def _mc_key(self):
