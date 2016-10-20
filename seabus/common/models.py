@@ -61,6 +61,9 @@ class Boat(ModelBase):
     type_and_cargo = db.Column(db.Integer, default=None)
     lastseen_on = db.Column(db.DateTime, default = dt.utcnow)
 
+    # hard coded from observing data
+    seabus_mmsis = [316014621, 316028554, 316011651, 316011649]
+
     def __init__(self, mmsi):
         self.mmsi = mmsi
         self.save()
@@ -91,6 +94,9 @@ class Boat(ModelBase):
         else:
             # if we've seen this boat before update lastseen time
             boat.lastseen_on = dt.utcnow()
+
+        if boat.mmsi in Boat.seabus_mmsis:
+            boat.is_seabus = True
 
         boat._parse_beacon(beacon)
         boat.save()
