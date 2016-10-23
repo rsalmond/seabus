@@ -68,16 +68,18 @@ Vagrant.configure(2) do |config|
   # documentation for more information about their specific syntax and use.
    config.vm.provision "shell", inline: <<-SHELL
     # base requirements setup
-    sudo apt-get update
-    sudo apt-get install -y git nginx python-pip python-dev python-pandas memcached sqlite3
-    sudo pip install virtualenv
+    apt-get update
+    apt-get install -y git nginx python-pip python-dev python-pandas memcached sqlite3
+    pip install virtualenv
     # repo setup
-    ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-    git clone git@github.com:rsalmond/seabus.git
-    chown vagrant:vagrant seabus -R
+    sudo -u vagrant ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+    sudo -u vagrant git clone https://github.com/rsalmond/seabus.git
+    cd /home/vagrant/seabus
+    sudo -u vagrant git remote set-url origin git@github.com:rsalmond/seabus.git
+    cd
+    # requirements setup 
     sudo -u vagrant virtualenv /home/vagrant/seabus/seabus/.venv
-    . /home/vagrant/seabus/seabus/.venv/bin/activate
-    sudo -u vagrant pip install -r /home/vagrant/seabus/seabus/requirements.txt
+    sudo -u vagrant /home/vagrant/seabus/seabus/.venv/bin/pip install -r /home/vagrant/seabus/seabus/requirements.txt
     # nginx setup
     rm /etc/nginx/sites-enabled/default
     cp /home/vagrant/seabus/config/nginx-seabus-dev /etc/nginx/sites-enabled/seabus
