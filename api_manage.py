@@ -22,10 +22,8 @@ def apidev():
 @api_manager.command
 def apiprod():
     api_app.config.from_object('seabus.api.config.Prod')
-    socketio.run(
-        api_app,
-        debug=False,
-        use_reloader=False,
+    api_app.run(
+        port=6000,
     )
 
 if __name__ == '__main__':
