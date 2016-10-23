@@ -2,10 +2,12 @@ FROM amancevice/pandas:core-python2
 RUN pip install pandas==0.19.0
 
 ADD seabus /home/ubuntu/seabus
-ADD web_manage.py /home/ubuntu/
 
 RUN \
+ apk update && \
+ apk add linux-headers && \
  pip install -r /home/ubuntu/seabus/requirements.txt
 
+EXPOSE 5000
 WORKDIR /home/ubuntu/seabus/
-CMD [".venv/bin/uwsgi", "--http", ":5000", "--gevent", "1000", "--http-websockets", "--master", "--wsgi-file", "app.py", "--callable", "app"]
+CMD ["uwsgi", "--http", ":5000", "--gevent", "1000", "--http-websockets", "--master", "--wsgi-file", "app.py", "--callable", "app"]
