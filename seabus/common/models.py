@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import os
 import logging
 import pickle
+import oboe
 from datetime import datetime as dt
 
 from seabus.common.database import db
@@ -101,6 +102,7 @@ class Boat(ModelBase):
         self.save()
 
     @classmethod
+    @oboe.profile_function('all_seabuses')
     def all_seabuses(cls):
         boats = []
         for mmsi in Boat.seabus_mmsis:
@@ -287,6 +289,7 @@ class Telemetry(ModelBase):
             return pickle.loads(cached)
 
     @classmethod
+    @oboe.profile_function('Telemetry.get_for_boat')
     def get_for_boat(cls, boat):
         """ try to fetch the latest telemetry from cache first, if not grab from db and cache for next time """
         telemetry = Telemetry.from_cache_for_boat(boat)
