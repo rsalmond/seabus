@@ -33,6 +33,18 @@ class ModelBase(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
 
+    def __eq__(self, other):
+        """ compare class type and (non sqlalchemy) columns for equality """
+        if not isinstance(other, self.__class__):
+            return False
+
+        for k, v in self.__dict__.iteritems():
+            if not k.startswith('_'):
+                if getattr(self, k) != getattr(other, k):
+                    return False
+
+        return True
+
     @classmethod
     def by_id(cls, id):
         return db.session.query(cls).filter_by(id=id).first()
@@ -48,6 +60,22 @@ class ModelBase(db.Model):
     def save(self):
         db.session.add(self)
         db.session.commit()
+
+    def _mc_key(self):
+        """ memcached key based on class name + instance id """
+        assert self.id is not None
+        return '{}_{}'.format(str(self.__class__.__name__), self.id)
+
+    def put_cache(self):
+        """ write this model to memcached """
+        mc_client.set(self._mc_key(), pickle.dumps(self))
+
+    @classmethod
+    def get_cache(cls, id):
+        key = '{}_{}'.format(cls.__name__, id)
+        cached = mc_client.get(key)
+        if cached is not None:
+            return pickle.loads(cached)
 
 class Boat(ModelBase):
     """
@@ -67,7 +95,7 @@ class Boat(ModelBase):
     lastseen_on = db.Column(db.DateTime, default = dt.utcnow)
 
     # hard coded from observing data
-    seabus_mmsis = [316014621, 316028554, 316011651, 316011649]
+    seabus_mmsis = [316028554, 316014621, 316011651, 316011649]
 
     def __init__(self, mmsi):
         self.mmsi = mmsi
@@ -76,7 +104,21 @@ class Boat(ModelBase):
     @classmethod
     @oboe.profile_function('all_seabuses')
     def all_seabuses(cls):
-        return db.session.query(cls).filter_by(is_seabus=True).all()
+        boats = []
+        for mmsi in Boat.seabus_mmsis:
+            # first try to fetch from cache
+            boat = Boat.from_cache_by_mmsi(mmsi)
+            if boat is not None:
+                boats.append(boat)
+            else:
+                # fall back to db and cache response
+                boat = db.session.query(cls).filter_by(mmsi=mmsi).first()
+                if boat is not None:
+                    boat.put_cache()
+                    boats.append(boat)
+
+        if len(boats) > 0:
+            return boats
 
     @classmethod
     def from_beacon(cls, beacon):
@@ -143,6 +185,20 @@ class Boat(ModelBase):
                 self.dim_to_port = int(d2port)
                 self.dim_to_star = int(d2star)
 
+    def _mc_key(self):
+        """ memcached key based on class name + mmsi """
+        assert self.mmsi is not None
+        return '{}_{}'.format(str(self.__class__.__name__), self.mmsi)
+
+    @classmethod
+    def from_cache_by_mmsi(cls, mmsi):
+        key = '{}_{}'.format(cls.__name__, mmsi)
+        cached = mc_client.get(key)
+        if cached is not None:
+            return pickle.loads(cached)
+        
+
+
 class Telemetry(ModelBase):
     """
     Everything related to position, heading, etc coming in via http://catb.org/gpsd/AIVDM.html#_types_1_2_and_3_position_report_class_a
@@ -167,18 +223,6 @@ class Telemetry(ModelBase):
 
     def __repr__(self):
         return '<% {}, {} %>'.format(self.lat, self.lon)
-
-    def __eq__(self, other):
-        """ for testing, compare all columns for equality """
-        if not isinstance(other, Telemetry):
-            return False
-
-        for k, v in self.__dict__.iteritems():
-            if not k.startswith('_'):
-                if getattr(self, k) != getattr(other, k):
-                    return False
-
-        return True
 
     @classmethod
     def from_beacon(cls, beacon):
@@ -237,10 +281,6 @@ class Telemetry(ModelBase):
         assert self.boat_id is not None
         return '{}_{}'.format(str(self.__class__.__name__), self.boat_id)
 
-    def put_cache(self):
-        """ write this telemetry to memcached """
-        mc_client.set(self._mc_key(), pickle.dumps(self))
-
     @classmethod
     def from_cache_for_boat(cls, boat):
         key = '{}_{}'.format(cls.__name__, boat.id)
@@ -251,7 +291,7 @@ class Telemetry(ModelBase):
     @classmethod
     @oboe.profile_function('Telemetry.get_for_boat')
     def get_for_boat(cls, boat):
-        """ try to fetch from cache first, if not grab from db and cache for next time """
+        """ try to fetch the latest telemetry from cache first, if not grab from db and cache for next time """
         telemetry = Telemetry.from_cache_for_boat(boat)
         if not telemetry:
             telemetry = Telemetry.from_db_for_boat(boat)

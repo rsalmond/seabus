@@ -88,9 +88,9 @@ def listen(config):
                 log.info(beacon)
 
             # extract boat data from beacon, here we should get one of the following (ALL CASES ARE STORED IN DB!)
-            #  - an existing boat record from the db by checking mmsi in the beacon
-            #  - a new boat object with no name, dimensions, etc. because this is a telemetry beacon
-            #  - a new (or updated by this beacon) boat object with name, dimensions, etc. because this is a type 5 static voyage data beacon
+            #  - an existing boat record from the db by checking mmsi in the beacon, regardless of beacon type
+            #  - a new boat object with mmsi but no name, dimensions, etc. because this is a telemetry beacon
+            #  - a new (or updated by this beacon) boat object with mmsi, name, dimensions, etc. because this is a type 5 static voyage data beacon
             boat = Boat.from_beacon(beacon)
 
             # try to extract telemetry data from beacon

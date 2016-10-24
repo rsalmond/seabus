@@ -40,4 +40,5 @@ To send a few recorded seabus AIS update beacons to the running listener:
 ```
 
 #API
-Interested in accessing Seabus data? There's no API yet but if you've got a cool idea for using the data I'd love to hear about it.
+
+There is an experimental API read endpoint available at [http://api.seab.us/data/v1](http://api.seab.us/data/v1). At the moment it requires no access key and provides the same data delivered to the web front end. Both of these things may change, watch this space!
