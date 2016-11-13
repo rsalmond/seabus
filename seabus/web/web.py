@@ -17,4 +17,5 @@ def create_app(config=None):
     app.register_blueprint(blueprint)
     db.init_app(app)
     app.wsgi_app = OboeMiddleware(app.wsgi_app)
+    app.logger.info(app.config.get('SQLALCHEMY_DATABASE_URI'))
     return app

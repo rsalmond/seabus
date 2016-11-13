@@ -19,6 +19,7 @@ def seabus_telemetry():
                 'lat': boat_telemetry.lat,
                 'lon': boat_telemetry.lon,
                 'true_heading': boat_telemetry.true_heading,
+                'speed': boat_telemetry.speed_over_ground,
                 'name': boat.name,
                 'id': boat.id
             })

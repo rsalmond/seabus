@@ -45,6 +45,7 @@ def listenprod():
 @web_manager.command
 def debug():
     from seabus.common.models import Telemetry, Boat
+    from seabus.common.telemetry import seabus_telemetry
     import pdb
     pdb.set_trace()
 
