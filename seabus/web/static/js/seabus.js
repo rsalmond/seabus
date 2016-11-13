@@ -31,9 +31,19 @@ var seabus = {
         }
     },
 
+    updatedPos: function (boat) {
+      // based on the most recent position and heading compute current position
+      var mps = (boat.speed * 1.852 * 1000) / (60 * 60); // convert knots to meters per second
+      var distance_travelled = mps * ((Date.now() / 1000) - boat.update_time);
+      var curpos = new LatLon(boat.lat, boat.lon);
+      return curpos.destinationPoint(distance_travelled, boat.true_heading);
+    },
+
     updateMap: function(data) {
         // draw boats on the map
         for (var boat in data.boats) {
+            // set a time stamp for when we first saw this data
+            data.boats[boat].update_time = Date.now() / 1000;
             lat = data.boats[boat].lat;
             lon = data.boats[boat].lon;
             name = data.boats[boat].name;
@@ -59,6 +69,16 @@ var seabus = {
                 });
                 marker.setMap(this.map);
                 this.markers[id] = marker;
+            }
+            // for boats which are moving, interpolate position between beacon updates
+            if (data.boats[boat].speed > 0) {
+              var that = this;
+              var current_boat = data.boats[boat];
+              setInterval(function() {
+                var pos = that.updatedPos(current_boat);
+                that.markers[current_boat.id].setPosition(new google.maps.LatLng(pos.lat, pos.lon));
+                console.log(pos);
+              }, 500);
             }
         }
     },
