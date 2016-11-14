@@ -113,10 +113,14 @@ def listen(config):
                         resp = requests.get(update_url)
                     except requests.exceptions.ConnectionError as e:
                         log.error('Unable to reach /update endpoint! {}'.format(e))
-                    if not resp.ok:
-                        log.error('Bad response code: {}, msg: {}'.format(resp.status_code, resp.text))
-                    else:
-                        log.debug('Web app /update endpoint hit.')
+                        resp = None
+
+                    if resp is not None:
+                        if not resp.ok:
+                            log.error('Bad response code: {}, msg: {}'.format(resp.status_code, resp.text))
+                        else:
+                            log.debug('Web app /update endpoint hit.')
+
                 else:
                     log.info('Other Vessel: {}, {}'.format(boat.name, telemetry))
 
