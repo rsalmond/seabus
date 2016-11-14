@@ -9,7 +9,7 @@ Flask-Script==2.0.5
 Flask-SocketIO==2.7.1
 Flask-SQLAlchemy==2.1
 folium==0.2.1
-gevent==1.1.2
+gevent==1.2a1
 greenlet==0.4.10
 html5lib==0.999
 itsdangerous==0.24
