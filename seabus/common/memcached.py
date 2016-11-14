@@ -21,4 +21,5 @@ def json_deserializer(key, value, flags):
         return json.loads(value)
     raise Exception("Unknown serialization format")
 
-mc_client = Client(('localhost', 11211), serializer=json_serializer, deserializer=json_deserializer)
+# hostname 'memcached' will be set up by docker-compose
+mc_client = Client(('memcached', 11211), serializer=json_serializer, deserializer=json_deserializer)
