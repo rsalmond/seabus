@@ -1,3 +1,5 @@
+.dockerignore
+Dockerfile*
 .venv
 .git
 .vagrant
