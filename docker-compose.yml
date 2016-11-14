@@ -1,0 +1,26 @@
+version: '2'
+services:
+  listener:
+    image: listener
+    build: 
+      context: .
+      dockerfile: Dockerfile.listen
+    ports:
+      - "3000:3000/udp"
+    volumes:
+      - /home/phro/code/seabus/data:/seabus/data
+    depends_on:
+      - memcached
+  web:
+    image: web
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "5000:5000"
+    volumes_from:
+      - listener
+    depends_on:
+      - memcached
+  memcached:
+    image: memcached:alpine
