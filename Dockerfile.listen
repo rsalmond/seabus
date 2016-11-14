@@ -6,7 +6,8 @@ RUN apk update && \
 
 ADD . /seabus
 
-RUN pip install -r /seabus/seabus/requirements.txt
+RUN pip install -r /seabus/seabus/requirements.txt && \
+    apk del g++ python-dev linux-headers
 
 WORKDIR /seabus
 
