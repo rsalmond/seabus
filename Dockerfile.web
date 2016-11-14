@@ -8,4 +8,4 @@ RUN apk update && \
     apk del linux-headers
 
 WORKDIR /seabus/
-CMD ["uwsgi", "--http", ":5000", "--gevent", "1000", "--http-websockets", "--master", "--wsgi-file", "wsgi.py", "--callable", "app"]
+CMD ["uwsgi", "--http", ":5000", "--gevent", "1000", "--http-websockets", "--master", "--wsgi-file", "web_wsgi.py", "--callable", "app"]
