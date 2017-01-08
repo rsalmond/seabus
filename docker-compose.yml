@@ -22,5 +22,16 @@ services:
       - listener
     depends_on:
       - memcached
+  api:
+    image: api
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "6000:6000"
+    volumes_from:
+      - listener
+    depends_on:
+      - memcached
   memcached:
     image: memcached:alpine

@@ -1,0 +1,11 @@
+FROM amancevice/pandas:0.19-python2
+
+ADD . /seabus
+
+RUN apk update && \
+    apk add linux-headers && \
+    pip install -r /seabus/seabus/requirements.txt && \
+    apk del linux-headers
+
+WORKDIR /seabus/
+CMD ["uwsgi", "--http", ":6000", "--gevent", "1000", "--http-websockets", "--master", "--wsgi-file", "api_wsgi.py", "--callable", "app"]
