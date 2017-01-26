@@ -97,6 +97,7 @@ def listen(config):
             telemetry = Telemetry.from_beacon(beacon)
 
             # if this beacon has telemetry, mark it as belonging to source boat
+            #TODO: call this method after checking if boat is none
             if telemetry is not None:
                 telemetry.set_boat(boat)
 
