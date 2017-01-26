@@ -1,0 +1,4 @@
+# m h  dom mon dow   command
+
+10 3 * * * /home/pi/start_calibration.sh >> /var/log/calibration.log 2>&1
+20 3 * * * /home/pi/finish_calibration.sh >> /var/log/calibration.log 2>&1
