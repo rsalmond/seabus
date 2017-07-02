@@ -1,7 +1,12 @@
 SHELL = bash
 
 seaweb:
-	@sudo docker build -t seaweb -f Dockerweb . 
+	@docker build -t seaweb:unstable -f Dockerweb.debian .
+
+push:
+	@`aws ecr get-login --no-include-email --region=us-west-2`
+	@docker tag seaweb:unstable 703091623098.dkr.ecr.us-west-2.amazonaws.com/seaweb:unstable
+	@docker push 703091623098.dkr.ecr.us-west-2.amazonaws.com/seaweb:unstable
 
 clean:
 	@for c in `sudo docker ps -a | grep -v CONTAINER | awk '{print $$1}'`; do sudo docker rm $$c; done
