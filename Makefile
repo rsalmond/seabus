@@ -1,7 +1,7 @@
 SHELL = bash
 
 seaweb:
-	@sudo docker build -t seaweb -f Dockerweb . 
+	@docker build -f Dockerweb.debian . -t seaweb
 
 clean:
 	@for c in `sudo docker ps -a | grep -v CONTAINER | awk '{print $$1}'`; do sudo docker rm $$c; done
