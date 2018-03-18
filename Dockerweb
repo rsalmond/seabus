@@ -1,12 +1,12 @@
-FROM amancevice/pandas:core-python2
-RUN pip install pandas==0.19.0
+#FROM amancevice/pandas:0.20.2-python2
+FROM alpine:3.5
 
 ADD seabus /home/ubuntu/seabus
 
 RUN \
  apk update && \
- apk add linux-headers && \
- pip install -r /home/ubuntu/seabus/requirements.txt
+ apk add linux-headers python2 py2-pip gcc python2-dev
+# pip install -r /home/ubuntu/seabus/requirements.txt
 
 EXPOSE 5000
 WORKDIR /home/ubuntu/seabus/
