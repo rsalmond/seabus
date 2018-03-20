@@ -1,0 +1,56 @@
+---
+- hosts: all
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: setup pi user
+    user:
+      name: pi
+  - name: create ssh dir
+    file:
+      name: '/home/pi/.ssh'
+      state: directory
+      owner: pi
+      group: pi
+  - name: drop ssh pubkey
+    copy:
+      src: './home/pi/.ssh/authorized_keys'
+      dest: '/home/pi/.ssh/authorized_keys'
+      mode: '0600'
+      owner: pi
+      group: pi
+  - name: install dependencies
+    action: >
+      {{ ansible_pkg_mgr }} name={{ item }} state=present update_cache=yes
+    with_items:
+      - vim
+      - librtlsdr0
+      - libfftw3-3
+      - rtl-sdr
+      - supervisor
+      - openvpn
+  - name: drop a bunch of files
+    copy: src={{ item.src }} dest={{ item.dest }} mode={{ item.mode }}
+    with_items:
+      - { src: './binaries/kal', dest: '/usr/local/bin/kal', mode: '0755' }
+      - { src: './binaries/rtl_ais', dest: '/usr/local/bin/rtl_ais', mode: '0755' }
+      - { src: './home/pi/start_calibration.sh', dest: '/home/pi/start_calibration.sh', mode: '0755' }
+      - { src: './home/pi/finish_calibration.sh', dest: '/home/pi/finish_calibration.sh', mode: '0755' }
+      - { src: './etc/openvpn/update-resolv-conf', dest: '/etc/openvpn/update-resolv-conf', mode: '0755' }
+      - { src: './etc/avahi/avahi-daemon.conf', dest: '/etc/avahi/avahi-daemon.conf', mode: '0644' }
+      - { src: './etc/supervisor/conf.d/vpn.conf', dest: '/etc/supervisor/conf.d/vpn.conf', mode: '0644' }
+      - { src: './etc/supervisor/conf.d/rtlais.conf', dest: '/etc/supervisor/conf.d/rtlais.conf', mode: '0644' }
+      - { src: '/keybase/private/rsalmond/projects/seabus/tuner/tuner-blue2.ovpn', dest: '/root/tuner-blue2.ovpn', mode: '0600' }
+  - name: bounce avahi daemon to pick up new config
+    service:
+      name: avahi-daemon
+      state: restarted
+  - name: bounce supervisor to pick up new configs
+    service:
+      name: supervisor
+      state: reloaded
+  - name: ensure supervisor has picked up new configs
+    supervisorctl: name={{ item.name }} state={{ item.state }}
+    with_items:
+      - { name: rtlais, state: present }
+      - { name: vpn, state: present }
