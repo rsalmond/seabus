@@ -1,7 +1,7 @@
 SHELL = bash
 
 seaweb:
-	@docker build -t seaweb:unstable -f Dockerweb.debian .
+	@docker build -f Dockerweb.debian . -t seaweb
 
 push:
 	@`aws ecr get-login --no-include-email --region=us-west-2`
