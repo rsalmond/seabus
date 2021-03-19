@@ -13,7 +13,7 @@ gevent==1.1.2
 greenlet==0.4.10
 html5lib==0.999
 itsdangerous==0.24
-Jinja2==2.8
+Jinja2==2.11.3
 libais==0.16
 Mako==1.0.4
 MarkupSafe==0.23
