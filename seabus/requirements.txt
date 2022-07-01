@@ -28,7 +28,7 @@ pytz==2016.7
 requests==2.2.1
 six==1.10.0
 SQLAlchemy==1.0.12
-supervisor==3.0b2
+supervisor==3.0.1
 urllib3==1.7.1
 uWSGI==2.0.14
 virtualenv==15.0.1
