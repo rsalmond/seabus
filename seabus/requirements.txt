@@ -11,7 +11,7 @@ Flask-SQLAlchemy==2.1
 folium==0.2.1
 gevent==1.1.2
 greenlet==0.4.10
-html5lib==0.999
+html5lib==0.999999999
 itsdangerous==0.24
 Jinja2==2.8
 libais==0.16
