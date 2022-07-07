@@ -25,7 +25,7 @@ python-editor==1.0.1
 python-engineio==1.0.3
 python-socketio==1.6.0
 pytz==2016.7
-requests==2.2.1
+requests==2.20.0
 six==1.10.0
 SQLAlchemy==1.0.12
 supervisor==3.0b2
