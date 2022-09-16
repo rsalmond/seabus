@@ -15,7 +15,7 @@ html5lib==0.999
 itsdangerous==0.24
 Jinja2==2.8
 libais==0.16
-Mako==1.0.4
+Mako==1.2.2
 MarkupSafe==0.23
 meld3==0.6.10
 oboe==1.5.10
